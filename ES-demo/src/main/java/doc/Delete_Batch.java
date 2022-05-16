@@ -1,0 +1,43 @@
+package doc;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.ElasticsearchTransport;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
+import org.apache.http.HttpHost;
+import org.elasticsearch.client.RestClient;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Delete_Batch {
+
+    public static void main(String[] args) throws IOException {
+
+        //创建ES客户端
+        //创建低级客户端
+        RestClient restClient = RestClient.builder(new HttpHost("localhost",9200)).build();
+        //使用Jackson映射器创建传输层
+        ElasticsearchTransport transport = new RestClientTransport(restClient,new JacksonJsonpMapper());
+        //创建API客户端
+        ElasticsearchClient client = new ElasticsearchClient(transport);
+
+        //构建一个批量删除集合
+        List<BulkOperation> list = new ArrayList<>();
+        list.add(new BulkOperation.Builder().delete(
+                d -> d.id("1002").index("user")).build());
+        list.add(new BulkOperation.Builder().delete(
+                d -> d.id("1003").index("user")).build());
+
+        //调用bulk方法执行批量删除操作
+        BulkResponse bulkResponse = client.bulk(e -> e.index("user").operations(list));
+        System.out.println("bulkResponse.items() = " + bulkResponse.items());
+
+        transport.close();
+        restClient.close();
+
+    }
+}
